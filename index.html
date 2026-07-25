@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NexusBet Casino</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -15,9 +15,9 @@
         
         @keyframes slotSpin { 
             0% { transform: translateY(0); } 
-            100% { transform: translateY(-100%); } 
+            100% { transform: translateY(-50%); } 
         }
-        .slot-spinning { animation: slotSpin 0.25s linear infinite; }
+        .slot-spinning { animation: slotSpin 0.3s linear infinite; }
 
         .coin-inner { 
             transform-style: preserve-3d; 
@@ -42,7 +42,6 @@
         }
     </style>
 </head>
-<!-- Aggiunto h-[100dvh] sul body per sicurezza mobile -->
 <body class="bg-[#0f212e] text-white font-sans overflow-hidden h-[100dvh] w-full relative">
 
     <!-- WIN TOAST UI -->
@@ -65,7 +64,7 @@
         </div>
     </div>
 
-    <!-- PRELOADER (Fix 100dvh) -->
+    <!-- PRELOADER (100dvh) -->
     <div id="app" class="w-full h-[100dvh] flex items-center justify-center">
         <div class="flex flex-col items-center gap-4">
             <i data-lucide="hexagon" class="w-16 h-16 text-[#00e701] animate-spin" style="animation-duration: 3s;"></i>
@@ -238,7 +237,7 @@
         }
 
         // ==========================================
-        // 4. AUTHENTICATION VIEW (Fix min-h-100dvh)
+        // 4. AUTHENTICATION VIEW
         // ==========================================
         function renderLoginView() {
             return `
@@ -322,6 +321,7 @@
                         if (error) throw error;
                         if (data) { 
                             window.currentUser = data; 
+                            // LocalStorage removed for security
                             const dbBal = data.Balance !== undefined ? data.Balance : (data.balance !== undefined ? data.balance : 1000); 
                             window.updateBalance(Number(dbBal), true, true); 
                             window.initApp(); 
@@ -333,6 +333,7 @@
                             errorDiv.classList.remove('hidden'); 
                         } else { 
                             window.currentUser = data; 
+                            // LocalStorage removed for security
                             const dbBal = data.Balance !== undefined ? data.Balance : (data.balance !== undefined ? data.balance : 0); 
                             window.updateBalance(Number(dbBal), true, true); 
                             window.initApp(); 
@@ -350,7 +351,7 @@
         }
 
         // ==========================================
-        // 5. MAIN LAYOUT (Fix 100dvh container)
+        // 5. MAIN LAYOUT
         // ==========================================
         function renderCasinoLayout() {
             const games = [
@@ -429,6 +430,7 @@
             });
             document.getElementById('btn-logout').onclick = () => { 
                 window.currentUser = null; 
+                // LocalStorage removed
                 window.initApp(); 
             };
             window.addEventListener('resize', () => { 
@@ -518,7 +520,7 @@
         }
 
         // ==========================================
-        // 7. GAMES IMPLEMENTATIONS (Fix 100dvh panels)
+        // 7. GAMES IMPLEMENTATIONS (100dvh applied to panels)
         // ==========================================
         
         // --- ROULETTE ---
@@ -898,7 +900,7 @@
             updateUI();
         }
 
-        // --- MINES (FIXED GRID JITTER ON MOBILE) ---
+        // --- MINES ---
         function initMinesGame(container) {
             let state = { bet: 10, mines: 3, playing: false, grid: [], revealed: 0 };
             
@@ -919,7 +921,7 @@
                     <button id="mines-btn" class="w-full mt-auto bg-[#00e701] text-black font-bold text-lg py-4 rounded-lg">Bet</button>
                 </div>
                 <div class="flex-1 bg-[#0f212e] rounded-xl border border-[#2f4553] flex flex-col items-center justify-center p-4 sm:p-8 relative">
-                    <div id="mines-msg" class="absolute top-4 font-bold text-2xl hidden"></div>
+                    <div id="mines-msg" class="absolute top-4 font-bold text-2xl hidden z-20"></div>
                     <div id="mines-grid" class="grid grid-cols-5 gap-2 w-full max-w-[320px] sm:max-w-[400px] aspect-square mx-auto"></div>
                 </div>
             </div>`;
@@ -946,12 +948,11 @@
                     
                     if (cell && cell.revealed) { 
                         bg = cell.isMine ? 'bg-red-500/20 border-2 border-red-500' : 'bg-[#2f4553] border-2 border-transparent'; 
-                        // Fix for mobile stretching: Using absolute positioning for emoji
+                        // FIX: Mobile sizing bug
                         content = `<span class="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl drop-shadow-md leading-none">${cell.isMine ? '💣' : '💎'}</span>`; 
                     }
                     
-                    // Box aspect-square ensures it doesn't deform
-                    btnC.className = `relative w-full h-full aspect-square rounded-lg flex items-center justify-center transition-all shadow-inner ${bg}`; 
+                    btnC.className = `relative rounded-lg flex items-center justify-center transition-all shadow-inner w-full h-full aspect-square ${bg}`; 
                     btnC.innerHTML = content; 
                     btnC.disabled = !state.playing || (cell && cell.revealed);
                     
@@ -964,7 +965,7 @@
                             state.playing = false; 
                             state.grid.forEach(c => c.revealed = true);
                             msgEl.innerText = "Busted!"; 
-                            msgEl.className = "absolute top-4 text-red-500 font-bold text-2xl animate-pulse";
+                            msgEl.className = "absolute top-4 text-red-500 font-bold text-2xl animate-pulse z-20";
                             msgEl.classList.remove('hidden');
                         } else {
                             state.revealed++; 
@@ -1714,7 +1715,7 @@
         }
 
         // ==========================================
-        // 8. BOOTSTRAPPER & AUTO-LOGIN
+        // 8. BOOTSTRAPPER (NO LOCAL STORAGE)
         // ==========================================
         async function bootBase44() {
             try {
@@ -1722,15 +1723,7 @@
                 window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
                 console.log("Supabase connected securely.");
 
-                const savedSession = localStorage.getItem('nexusSession');
-                if (savedSession) {
-                    window.currentUser = JSON.parse(savedSession);
-                    const { data } = await window.supabase.from('profiles').select('Balance, balance').eq('id', window.currentUser.id).single();
-                    if (data) {
-                        const dbBal = data.Balance !== undefined ? data.Balance : (data.balance !== undefined ? data.balance : 0);
-                        window.updateBalance(Number(dbBal), true, true); 
-                    }
-                }
+                // Auto-login removed. Users must log in manually every session.
                 window.initApp();
 
             } catch (err) {
